@@ -5,26 +5,28 @@ contract MichCoin is ERC20 {
 
     string public constant name = "Mich Coin";
     string public constant symbol = "MI4";
-    uint8 public constant decimals = 2;
+    uint public constant decimals = 2;
     uint public tokenToEtherRate;
     uint public startTime;
     uint public durationTime;
-    uint public minEther;
-    uint public maxEther;
+    uint public minTokens;
+    uint public maxTokens;
+    bool public buyTokenEnabled;
     address owner;
 
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
 
     function MichCoin() {
-        minEther = 100 ether;
-        maxEther = 3000 ether;
         tokenToEtherRate = 215;
-        balances[msg.sender] = totalSupply;
+        minTokens = 21500*(10**decimals);
+        maxTokens = 645000*(10**decimals);
         totalSupply = 1075000*(10**decimals);
+        balances[msg.sender] = totalSupply;
         owner = msg.sender;
         startTime = now;
-        durationTime = 30 minutes;
+        durationTime = 10 minutes;
+        buyTokenEnabled = true;
     }
 
     function balanceOf(address _owner) constant returns (uint balance) {
@@ -63,11 +65,32 @@ contract MichCoin is ERC20 {
     }
 
     function buyToken() payable {
-        uint tokenAmount = tokenToEtherRate * msg.value / (10**18);
-        if (now - startTime > durationTime || balances[owner] - tokenAmount < 0 || balances[msg.sender] + tokenAmount < balances[msg.sender] || tokenAmount > 0) {
+        uint tokenAmount = tokenToEtherRate * msg.value * (10**decimals) / (10**18);
+        if (now - startTime > durationTime || balances[owner] - tokenAmount < totalSupply - maxTokens) {
+            throw;
+        }
+        if (balances[msg.sender] + tokenAmount < balances[msg.sender] || tokenAmount == 0) {
             throw;
         }
         balances[owner] -= tokenAmount;
         balances[msg.sender] += tokenAmount;
+    }
+
+    function finish() {
+        if (now - startTime > durationTime || balances[owner] < totalSupply - maxTokens) {
+            buyTokenEnabled = false;
+        }
+        if (!buyTokenEnabled) {
+            if (totalSupply - balances[owner] < minTokens) { //Продали мало, возврат средств
+                if (balances[msg.sender] > 0) {
+                    uint clientAmount = balances[msg.sender] * (10**18) / (10**decimals) / tokenToEtherRate ;
+                    msg.sender.transfer(clientAmount);
+                    balances[owner] += balances[msg.sender];
+                    balances[msg.sender] = 0;
+                }
+            } else { //Передаем все хозяину
+                owner.transfer(this.balance);
+            }
+        }
     }
 }
