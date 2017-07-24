@@ -6,20 +6,25 @@ contract MichCoin is ERC20 {
     string public constant name = "Mich Coin";
     string public constant symbol = "MI4";
     uint8 public constant decimals = 2;
-    uint private exchangeRate = 2;
+    uint public tokenToEtherRate;
     uint public startTime;
     uint public durationTime;
+    uint public minEther;
+    uint public maxEther;
     address owner;
 
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
 
     function MichCoin() {
-        totalSupply = 50000000;
+        minEther = 100 ether;
+        maxEther = 3000 ether;
+        tokenToEtherRate = 215;
         balances[msg.sender] = totalSupply;
+        totalSupply = 1075000*(10**decimals);
         owner = msg.sender;
         startTime = now;
-        durationTime = 5 minutes;
+        durationTime = 30 minutes;
     }
 
     function balanceOf(address _owner) constant returns (uint balance) {
@@ -58,8 +63,8 @@ contract MichCoin is ERC20 {
     }
 
     function buyToken() payable {
-        uint tokenAmount = msg.value*exchangeRate;
-        if (now - startTime > durationTime || balances[owner] - tokenAmount < 0 || balances[msg.sender] + tokenAmount < balances[msg.sender]) {
+        uint tokenAmount = tokenToEtherRate * msg.value / (10**18);
+        if (now - startTime > durationTime || balances[owner] - tokenAmount < 0 || balances[msg.sender] + tokenAmount < balances[msg.sender] || tokenAmount > 0) {
             throw;
         }
         balances[owner] -= tokenAmount;
