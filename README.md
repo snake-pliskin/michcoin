@@ -39,3 +39,4 @@ balance[msg.sender] (MI4*10^decimal)
 tokenAmount = 215 * msg.value / (10**18)
 tokenAmount = tokenToEtherRate * msg.value / (10**18)
 
+
