@@ -5,7 +5,7 @@ contract MichCoin is ERC20 {
 
     string public constant name = "Mich Coin";
     string public constant symbol = "MI4";
-    uint public constant decimals = 2;
+    uint public decimals;
     uint public tokenToEtherRate;
     uint public startTime;
     uint public durationTime;
@@ -17,11 +17,13 @@ contract MichCoin is ERC20 {
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
 
-    function MichCoin() {
+    function MichCoin(uint _tokenCount, uint _decimals) {
         tokenToEtherRate = 215;
+        decimals = _decimals;
         minTokens = 21500*(10**decimals);
         maxTokens = 645000*(10**decimals);
-        totalSupply = 1075000*(10**decimals);
+        //totalSupply = 1075000*(10**decimals);
+        totalSupply = _tokenCount*(10**decimals);
         balances[msg.sender] = totalSupply;
         owner = msg.sender;
         startTime = now;
@@ -35,6 +37,7 @@ contract MichCoin is ERC20 {
 
     function transfer(address _to, uint _value) returns (bool success) {
         if (balances[msg.sender] < _value || _value == 0 || balances[_to] + _value < balances[_to]) {
+            throw;
             return false;
         }
         balances[msg.sender] -= _value;
@@ -45,6 +48,7 @@ contract MichCoin is ERC20 {
 
     function transferFrom(address _from, address _to, uint _value) returns (bool success) {
         if (balances[msg.sender] < _value || _value == 0 || balances[_to] + _value < balances[_to] || allowed[_from][_to] < _value) {
+            throw;
             return false;
         }
         balances[_from] -= _value;
@@ -66,12 +70,14 @@ contract MichCoin is ERC20 {
 
     function buyToken() payable {
         uint tokenAmount = tokenToEtherRate * msg.value * (10**decimals) / (10**18);
-        if (now - startTime > durationTime || balances[owner] - tokenAmount < totalSupply - maxTokens) {
-            throw;
-        }
-        if (balances[msg.sender] + tokenAmount < balances[msg.sender] || tokenAmount == 0) {
-            throw;
-        }
+        require(now - startTime <= durationTime && balances[owner] - tokenAmount >= totalSupply - maxTokens);
+//        if (now - startTime > durationTime || balances[owner] - tokenAmount < totalSupply - maxTokens) {
+//            throw;
+//        }
+        require(balances[msg.sender] + tokenAmount >= balances[msg.sender] && tokenAmount > 0);
+//        if (balances[msg.sender] + tokenAmount < balances[msg.sender] || tokenAmount == 0) {
+//            throw;
+//        }
         balances[owner] -= tokenAmount;
         balances[msg.sender] += tokenAmount;
     }
