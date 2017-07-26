@@ -38,7 +38,6 @@ contract MichCoin is ERC20 {
     function transfer(address _to, uint _value) returns (bool success) {
         if (balances[msg.sender] < _value || _value == 0 || balances[_to] + _value < balances[_to]) {
             throw;
-            return false;
         }
         balances[msg.sender] -= _value;
         balances[_to] += _value;

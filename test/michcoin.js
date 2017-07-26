@@ -4,15 +4,13 @@ function getTokenAmount(tokenCount) {
     return tokenCount*Math.pow(10, 8);
 }
 
-function printObject(obj) {
-    var s = JSON.stringify(obj, null, 4);
-    console.log(s);
-}
-
-function assertThrow(tx, message) {
-    tx.then(function(object){
-        printObject(object);
-        assert.fail("jopa");
+function assertThrow(tx) {
+    return tx.then( function(result) {
+        throw new Error("there should be exception in solidity");
+    }, function(err) {
+        if (err.message.indexOf("invalid opcode") == -1) {
+            throw new Error(err.message);
+        }
     });
 }
 
@@ -52,16 +50,10 @@ contract("MichCoin", function(accounts) {
         });
     });
     it("should fail to send 3 tokens", function() {
-        tx = mich.transfer(second, getTokenAmount(3), {from:first});
-        tx.catch(function(error) {
-            printObject(error);
-            assert.fail("sdsdsadd");
-        }).then(function(result) {
-            console.log("AA");
-            printObject(result);
-            assert.equal(1, 2);
-        });
-//        return assertThrow(mich.transfer(second, getTokenAmount(3), {from:first}), "transfer has not failed");
+        return assertThrow(mich.transfer(second, getTokenAmount(3), {from:first}));
+    });
+    it("should test sum", function() {
+        assert.equal(19+1, 20, "oops, sum is not 20");
     });
 });
 
