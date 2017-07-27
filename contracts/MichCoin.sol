@@ -17,12 +17,11 @@ contract MichCoin is ERC20 {
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
 
-    function MichCoin(uint _tokenCount, uint _decimals) {
-        tokenToEtherRate = 215;
+    function MichCoin(uint _tokenCount, uint _decimals, uint _tokenToEtherRate) {
+        tokenToEtherRate = _tokenToEtherRate;
         decimals = _decimals;
-        minTokens = 21500*(10**decimals);
-        maxTokens = 645000*(10**decimals);
-        //totalSupply = 1075000*(10**decimals);
+        minTokens = 4*(10**decimals);
+        maxTokens = 8*(10**decimals);
         totalSupply = _tokenCount*(10**decimals);
         balances[msg.sender] = totalSupply;
         owner = msg.sender;
@@ -36,24 +35,28 @@ contract MichCoin is ERC20 {
     }
 
     function transfer(address _to, uint _value) returns (bool success) {
-        if (balances[msg.sender] < _value || _value == 0 || balances[_to] + _value < balances[_to]) {
-            throw;
-        }
+        require(balances[msg.sender] >= _value);
+        require(balances[_to] + _value > balances[_to]);
+
         balances[msg.sender] -= _value;
         balances[_to] += _value;
+
         Transfer(msg.sender, _to, _value);
+
         return true;
     }
 
     function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-        if (balances[msg.sender] < _value || _value == 0 || balances[_to] + _value < balances[_to] || allowed[_from][_to] < _value) {
-            throw;
-            return false;
-        }
+        require(balances[msg.sender] >= _value);
+        require(allowed[_from][_to] >= _value);
+        require(balances[_to] + _value > balances[_to]);
+
         balances[_from] -= _value;
         balances[_to] += _value;
         allowed[_from][_to] -= _value;
+
         Transfer(_from, _to, _value);
+
         return true;
     }
 
@@ -69,14 +72,11 @@ contract MichCoin is ERC20 {
 
     function buyToken() payable {
         uint tokenAmount = tokenToEtherRate * msg.value * (10**decimals) / (10**18);
-        require(now - startTime <= durationTime && balances[owner] - tokenAmount >= totalSupply - maxTokens);
-//        if (now - startTime > durationTime || balances[owner] - tokenAmount < totalSupply - maxTokens) {
-//            throw;
-//        }
-        require(balances[msg.sender] + tokenAmount >= balances[msg.sender] && tokenAmount > 0);
-//        if (balances[msg.sender] + tokenAmount < balances[msg.sender] || tokenAmount == 0) {
-//            throw;
-//        }
+
+        require(now - startTime < durationTime);
+        require(balances[owner] - tokenAmount >= totalSupply - maxTokens);
+        require(balances[msg.sender] + tokenAmount > balances[msg.sender]);
+
         balances[owner] -= tokenAmount;
         balances[msg.sender] += tokenAmount;
     }
