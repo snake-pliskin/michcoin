@@ -118,7 +118,7 @@ contract MichCoin is ERC20 {
             // min token sale not reached, refunding
             address client = msg.sender;
             if (client != owner && balances[client] > 0) {
-                uint clientAmount = balances[client] * (10**18) / (10**decimals) / tokenToEtherRate;
+                uint clientAmount = balances[client] * (10**18) / tokenToEtherRate / (10**decimals);
                 balances[owner] += balances[client];
                 balances[client] = 0;
                 client.transfer(clientAmount);
@@ -129,6 +129,14 @@ contract MichCoin is ERC20 {
                 owner.transfer(this.balance);
             }
         }
+    }
+
+    function tokenToWei(uint _tokens) constant returns (uint) {
+        return _tokens * (10**18) / tokenToEtherRate / (10**decimals);
+    }
+
+    function weiToToken(uint _weis) constant returns (uint) {
+        return tokenToEtherRate * _weis * (10**decimals) / (10**18);
     }
 
 }
