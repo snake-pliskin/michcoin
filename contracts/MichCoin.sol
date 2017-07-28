@@ -128,4 +128,21 @@ contract MichCoin is ERC20 {
         }
     }
 
+    function withdraw2() {
+        require(now - startTime > durationTime || balances[owner] <= totalSupply - maxTokens);
+        if (balances[owner] >= totalSupply - minTokens) {
+            // min token sale not reached, refunding
+            address client = msg.sender;
+            if (client != owner && balances[client] > 0) {
+                uint clientAmount = balances[client] * (10**18) / (10**decimals) / tokenToEtherRate;
+                balances[owner] += balances[client];
+                balances[client] = 0;
+                client.transfer(clientAmount);
+            }
+        } else {
+            // goal reached, sending all to owner
+            owner.transfer(this.balance);
+        }
+    }
+
 }

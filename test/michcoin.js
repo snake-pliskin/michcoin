@@ -159,29 +159,3 @@ contract("withdraw", function(accounts) {
     });
 });
 
-contract("withdraw refund", function(accounts) {
-    it("should refund", function() {
-        var balance1;
-        var balance2;
-        var balance3;
-        var mich;
-        return MichCoin.new(20, 8, 215, 1).then(function(instance) {
-            mich = instance;
-            return mich.buyToken({from:accounts[1], value:oneTokenWei});
-        }).then(function(tx) {
-            return mich.buyToken({from:accounts[2], value:oneTokenWei});
-        }).then(function(tx) {
-            return mich.buyToken({from:accounts[3], value:halfTokenWei});
-        }).then(function(tx) {
-            balance1 = web3.eth.getBalance(accounts[1]).toNumber();
-            balance2 = web3.eth.getBalance(accounts[2]).toNumber();
-            balance3 = web3.eth.getBalance(accounts[3]).toNumber();
-            common.sleep(2000);
-            return mich.withdraw({from:accounts[7]});
-        }).then(function(tx) {
-            assert.equal(web3.eth.getBalance(accounts[1]).toNumber(), balance1 + oneTokenWei);
-            assert.equal(web3.eth.getBalance(accounts[2]).toNumber(), balance2 + oneTokenWei);
-            assert.equal(web3.eth.getBalance(accounts[3]).toNumber(), balance3 + halfTokenWei);
-        });
-    });
-});
