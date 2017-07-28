@@ -128,6 +128,9 @@ contract("buyToken", function(accounts) {
     it("should fail to buy 7 tokens, because maxToken=8", function() {
         return common.assertThrow(mich.buyToken({from:accounts[1], value:7*oneTokenWei}));
     });
+    it("should fail to buy 17 > 10 tokens, because maxToken=8", function() {
+        return common.assertThrow(mich.buyToken({from:accounts[1], value:17*oneTokenWei}));
+    });
 });
 
 contract("withdraw", function(accounts) {

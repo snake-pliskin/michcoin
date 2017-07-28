@@ -79,6 +79,7 @@ contract MichCoin is ERC20 {
         uint tokenAmount = weiToToken(msg.value);
 
         require(now - startTime < durationTime);
+        require(balances[owner] >= tokenAmount);
         require(balances[owner] - tokenAmount >= totalSupply - maxTokens);
         require(balances[msg.sender] + tokenAmount > balances[msg.sender]);
 
