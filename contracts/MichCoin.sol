@@ -11,24 +11,22 @@ contract MichCoin is ERC20 {
     uint public durationTime;
     uint public minTokens;
     uint public maxTokens;
-    bool public buyTokenEnabled;
     address owner;
 
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
     address[] keys;
 
-    function MichCoin(uint _tokenCount, uint _decimals, uint _tokenToEtherRate, uint _durationInSec) {
+    function MichCoin(uint _tokenCount, uint _decimals, uint _tokenToEtherRate, uint _durationInSec, uint _minTokenCount, uint _maxTokenCount) {
         tokenToEtherRate = _tokenToEtherRate;
         decimals = _decimals;
-        minTokens = 4*(10**decimals);
-        maxTokens = 8*(10**decimals);
+        minTokens = _minTokenCount*(10**decimals);
+        maxTokens = _maxTokenCount*(10**decimals);
         totalSupply = _tokenCount*(10**decimals);
-        balances[msg.sender] = totalSupply;
         owner = msg.sender;
+        balances[owner] = totalSupply;
         startTime = now;
         durationTime = _durationInSec;
-        buyTokenEnabled = true;
     }
 
     function balanceOf(address _owner) constant returns (uint balance) {
@@ -78,7 +76,7 @@ contract MichCoin is ERC20 {
     }
 
     function buyToken() payable {
-        uint tokenAmount = tokenToEtherRate * msg.value * (10**decimals) / (10**18);
+        uint tokenAmount = weiToToken(msg.value);
 
         require(now - startTime < durationTime);
         require(balances[owner] - tokenAmount >= totalSupply - maxTokens);
@@ -98,7 +96,7 @@ contract MichCoin is ERC20 {
             for(uint i=0; i<keys.length; i++) {
                 address client = keys[i];
                 if (client != owner && balances[client] > 0) {
-                    uint clientAmount = balances[client] * (10**18) / (10**decimals) / tokenToEtherRate;
+                    uint clientAmount = tokenToWei(balances[client]);
                     balances[owner] += balances[client];
                     balances[client] = 0;
                     client.transfer(clientAmount);
@@ -118,7 +116,7 @@ contract MichCoin is ERC20 {
             // min token sale not reached, refunding
             address client = msg.sender;
             if (client != owner && balances[client] > 0) {
-                uint clientAmount = balances[client] * (10**18) / tokenToEtherRate / (10**decimals);
+                uint clientAmount = tokenToWei(balances[client]);
                 balances[owner] += balances[client];
                 balances[client] = 0;
                 client.transfer(clientAmount);

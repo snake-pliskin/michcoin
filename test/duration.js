@@ -1,14 +1,14 @@
 var common = require("./common.js");
 var MichCoin = artifacts.require("./MichCoin.sol");
 
-var twoTokenWei = 9302325581395350;
-var oneTokenWei = 4651162790697675;
-var halfTokenWei = 2325581395348838;
+var twoTokenWei = 10e15;
+var oneTokenWei = 5e15;
+var halfTokenWei = 2.5e15;
 
 contract("duration", function(accounts) {
     var mich;
     it("should show time", function() {
-        return MichCoin.new(20, 9, 215, 1).then(function(instance) {
+        return MichCoin.new(20, 9, 200, 1, 4, 8).then(function(instance) {
             mich = instance;
             return mich.buyToken({from:accounts[1], value:oneTokenWei}).then(function(tx) {
                 common.sleep(1000);
@@ -24,7 +24,7 @@ contract("withdraw refund", function(accounts) {
         var balance2;
         var balance3;
         var mich;
-        return MichCoin.new(20, 8, 215, 1).then(function(instance) {
+        return MichCoin.new(20, 8, 200, 1, 4, 8).then(function(instance) {
             mich = instance;
             return mich.buyToken({from:accounts[1], value:oneTokenWei});
         }).then(function(tx) {

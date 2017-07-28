@@ -1,9 +1,9 @@
 var common = require("./common.js");
 var MichCoin = artifacts.require("./MichCoin.sol");
 
-var twoTokenWei = 9302325581395350;
-var oneTokenWei = 4651162790697675;
-var halfTokenWei = 2325581395348838;
+var twoTokenWei = 10e15;
+var oneTokenWei = 5e15;
+var halfTokenWei = 2.5e15;
 
 contract("transfer", function(accounts) {
     var mich;
@@ -99,11 +99,10 @@ contract("transferFrom", function(accounts) {
 
 contract("buyToken", function(accounts) {
     var mich;
-    it("should buy 2 tokens for 2/215 ETH", function() {
+    it("should buy 2 tokens for 2/200 ETH", function() {
         return MichCoin.deployed().then(function(instance) {
             mich = instance;
-            var money = 2*Math.pow(10, 18)/215; //rounding problem occurs, so magic constant was used below
-            return mich.buyToken({from:accounts[1], value:9302325581395350}).then(function(tx) {
+            return mich.buyToken({from:accounts[1], value:twoTokenWei}).then(function(tx) {
                 return mich.balanceOf(accounts[1]);
             }).then(function(balance) {
                 assert.equal(balance.toNumber(), common.getTokenAmount(2));
@@ -117,17 +116,17 @@ contract("buyToken", function(accounts) {
         return common.assertThrow(mich.buyToken({from:accounts[1], value:0}));
     });
     it("should fail to buy > 10^-8 tokens", function() {
-        return common.assertThrow(mich.buyToken({from:accounts[1], value:46511627}));
+        return common.assertThrow(mich.buyToken({from:accounts[1], value:oneTokenWei*1e-8-1}));
     });
     it("should buy 10^-8 tokens", function() {
-        return mich.buyToken({from:accounts[1], value:46511628}).then(function(tx) {
+        return mich.buyToken({from:accounts[1], value:oneTokenWei*1e-8}).then(function(tx) {
             return mich.balanceOf(accounts[1]);
         }).then(function(balance) {
             assert.equal(balance.toNumber(), common.getTokenAmount(2.00000001));
         });
     });
     it("should fail to buy 7 tokens, because maxToken=8", function() {
-        return common.assertThrow(mich.buyToken({from:accounts[1], value:37209302325581390}));
+        return common.assertThrow(mich.buyToken({from:accounts[1], value:7*oneTokenWei}));
     });
 });
 
