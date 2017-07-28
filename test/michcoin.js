@@ -1,5 +1,6 @@
 var common = require("./common.js");
 var MichCoin = artifacts.require("./MichCoin.sol");
+
 var twoTokenWei = 9302325581395350;
 var oneTokenWei = 4651162790697675;
 var halfTokenWei = 2325581395348838;

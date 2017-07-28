@@ -91,24 +91,6 @@ contract MichCoin is ERC20 {
         balances[msg.sender] += tokenAmount;
     }
 
-//    function finish() {
-//        if (now - startTime > durationTime || balances[owner] < totalSupply - maxTokens) {
-//            buyTokenEnabled = false;
-//        }
-//        if (!buyTokenEnabled) {
-//            if (totalSupply - balances[owner] < minTokens) { //Продали мало, возврат средств
-//                if (balances[msg.sender] > 0) {
-//                    uint clientAmount = balances[msg.sender] * (10**18) / (10**decimals) / tokenToEtherRate ;
-//                    msg.sender.transfer(clientAmount);
-//                    balances[owner] += balances[msg.sender];
-//                    balances[msg.sender] = 0;
-//                }
-//            } else { //Передаем все хозяину
-//                owner.transfer(this.balance);
-//            }
-//        }
-//    }
-
     function withdraw() {
         require(now - startTime > durationTime || balances[owner] <= totalSupply - maxTokens);
         if (balances[owner] >= totalSupply - minTokens) {
@@ -124,7 +106,9 @@ contract MichCoin is ERC20 {
             }
         } else {
             // goal reached, sending all to owner
-            owner.transfer(this.balance);
+            if (this.balance > 0) {
+                owner.transfer(this.balance);
+            }
         }
     }
 
@@ -141,7 +125,9 @@ contract MichCoin is ERC20 {
             }
         } else {
             // goal reached, sending all to owner
-            owner.transfer(this.balance);
+            if (this.balance > 0) {
+                owner.transfer(this.balance);
+            }
         }
     }
 
