@@ -1,5 +1,5 @@
 var MichCoin = artifacts.require("./MichCoin.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(MichCoin, 10, 8, 215);
+  deployer.deploy(MichCoin, 10, 8, 215, 10);
 };

@@ -16,8 +16,9 @@ contract MichCoin is ERC20 {
 
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
+    address[] keys;
 
-    function MichCoin(uint _tokenCount, uint _decimals, uint _tokenToEtherRate) {
+    function MichCoin(uint _tokenCount, uint _decimals, uint _tokenToEtherRate, uint _durationInSec) {
         tokenToEtherRate = _tokenToEtherRate;
         decimals = _decimals;
         minTokens = 4*(10**decimals);
@@ -26,7 +27,7 @@ contract MichCoin is ERC20 {
         balances[msg.sender] = totalSupply;
         owner = msg.sender;
         startTime = now;
-        durationTime = 10 minutes;
+        durationTime = _durationInSec;
         buyTokenEnabled = true;
     }
 
@@ -38,6 +39,9 @@ contract MichCoin is ERC20 {
         require(balances[msg.sender] >= _value);
         require(balances[_to] + _value > balances[_to]);
 
+        if (balances[_to] == 0) {
+            keys.push(_to);
+        }
         balances[msg.sender] -= _value;
         balances[_to] += _value;
 
@@ -51,6 +55,9 @@ contract MichCoin is ERC20 {
         require(allowed[_from][_to] >= _value);
         require(balances[_to] + _value > balances[_to]);
 
+        if (balances[_to] == 0) {
+            keys.push(_to);
+        }
         balances[_from] -= _value;
         balances[_to] += _value;
         allowed[_from][_to] -= _value;
@@ -77,25 +84,48 @@ contract MichCoin is ERC20 {
         require(balances[owner] - tokenAmount >= totalSupply - maxTokens);
         require(balances[msg.sender] + tokenAmount > balances[msg.sender]);
 
+        if (balances[msg.sender] == 0) {
+            keys.push(msg.sender);
+        }
         balances[owner] -= tokenAmount;
         balances[msg.sender] += tokenAmount;
     }
 
-    function finish() {
-        if (now - startTime > durationTime || balances[owner] < totalSupply - maxTokens) {
-            buyTokenEnabled = false;
-        }
-        if (!buyTokenEnabled) {
-            if (totalSupply - balances[owner] < minTokens) { //Продали мало, возврат средств
-                if (balances[msg.sender] > 0) {
-                    uint clientAmount = balances[msg.sender] * (10**18) / (10**decimals) / tokenToEtherRate ;
-                    msg.sender.transfer(clientAmount);
-                    balances[owner] += balances[msg.sender];
-                    balances[msg.sender] = 0;
+//    function finish() {
+//        if (now - startTime > durationTime || balances[owner] < totalSupply - maxTokens) {
+//            buyTokenEnabled = false;
+//        }
+//        if (!buyTokenEnabled) {
+//            if (totalSupply - balances[owner] < minTokens) { //Продали мало, возврат средств
+//                if (balances[msg.sender] > 0) {
+//                    uint clientAmount = balances[msg.sender] * (10**18) / (10**decimals) / tokenToEtherRate ;
+//                    msg.sender.transfer(clientAmount);
+//                    balances[owner] += balances[msg.sender];
+//                    balances[msg.sender] = 0;
+//                }
+//            } else { //Передаем все хозяину
+//                owner.transfer(this.balance);
+//            }
+//        }
+//    }
+
+    function withdraw() {
+        require(now - startTime > durationTime || balances[owner] <= totalSupply - maxTokens);
+        if (balances[owner] >= totalSupply - minTokens) {
+            // min token sale not reached, refunding
+            for(uint i=0; i<keys.length; i++) {
+                address client = keys[i];
+                if (client != owner && balances[client] > 0) {
+                    uint clientAmount = balances[client] * (10**18) / (10**decimals) / tokenToEtherRate;
+                    balances[owner] += balances[client];
+                    balances[client] = 0;
+                    client.transfer(clientAmount);
                 }
-            } else { //Передаем все хозяину
-                owner.transfer(this.balance);
             }
+        } else {
+            // goal reached, sending all to owner
+            owner.transfer(this.balance);
         }
     }
+
 }
