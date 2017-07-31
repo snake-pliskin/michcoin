@@ -5,28 +5,38 @@ contract MichCoin is ERC20 {
 
     string public constant name = "Mich Coin";
     string public constant symbol = "MI4";
-    uint public decimals;
+    uint public constant decimals = 8;
+
     uint public tokenToEtherRate;
     uint public startTime;
     uint public durationTime;
+    uint public bonusDurationTime;
     uint public minTokens;
     uint public maxTokens;
+
     address owner;
+    address reserve;
+    address main;
 
     mapping(address => uint256) balances;
+    mapping(address => uint256) incomes;
     mapping(address => mapping(address => uint256)) allowed;
     address[] keys;
 
-    function MichCoin(uint _tokenCount, uint _decimals, uint _tokenToEtherRate, uint _durationInSec, uint _minTokenCount, uint _maxTokenCount) {
+    function MichCoin(uint _tokenCount, uint _minTokenCount, uint _tokenToEtherRate, uint _durationInSec, uint _bonusDurationInSec, address _mainAddress, address _reserveAddress) {
+
         tokenToEtherRate = _tokenToEtherRate;
-        decimals = _decimals;
-        minTokens = _minTokenCount*(10**decimals);
-        maxTokens = _maxTokenCount*(10**decimals);
         totalSupply = _tokenCount*(10**decimals);
+        minTokens = _minTokenCount*(10**decimals);
+        maxTokens = totalSupply*85/100;
+
         owner = msg.sender;
-        balances[owner] = totalSupply;
+        balances[this] = totalSupply;
         startTime = now;
         durationTime = _durationInSec;
+        bonusDurationTime = _bonusDurationInSec;
+        reserve = _reserveAddress;
+        main = _mainAddress;
     }
 
     function balanceOf(address _owner) constant returns (uint balance) {
@@ -77,55 +87,49 @@ contract MichCoin is ERC20 {
 
     function buyToken() payable {
         uint tokenAmount = weiToToken(msg.value);
+        uint bonusAmount = 0;
+        //add bonus token if bought on bonus period
+        if (now - startTime < bonusDurationTime) {
+            bonusAmount = tokenAmount / 10;
+            tokenAmount += bonusAmount;
+        }
 
         require(now - startTime < durationTime);
-        require(balances[owner] >= tokenAmount);
-        require(balances[owner] - tokenAmount >= totalSupply - maxTokens);
+        require(balances[this] >= tokenAmount);
+        require(balances[this] - tokenAmount >= totalSupply - maxTokens);
         require(balances[msg.sender] + tokenAmount > balances[msg.sender]);
 
         if (balances[msg.sender] == 0) {
             keys.push(msg.sender);
         }
-        balances[owner] -= tokenAmount;
+        balances[this] -= tokenAmount;
         balances[msg.sender] += tokenAmount;
+        incomes[msg.sender] += msg.value;
     }
 
+    event Log(string _msg);
+
     function withdraw() {
-        require(now - startTime > durationTime || balances[owner] <= totalSupply - maxTokens);
-        if (balances[owner] >= totalSupply - minTokens) {
+        require(now - startTime > durationTime || balances[this] <= totalSupply - maxTokens);
+        if (balances[this] >= totalSupply - minTokens) {
             // min token sale not reached, refunding
             for(uint i=0; i<keys.length; i++) {
                 address client = keys[i];
-                if (client != owner && balances[client] > 0) {
-                    uint clientAmount = tokenToWei(balances[client]);
-                    balances[owner] += balances[client];
+                if (incomes[client] > 0) {
                     balances[client] = 0;
-                    client.transfer(clientAmount);
+                    client.transfer(incomes[client]);
+                    incomes[client] = 0;
                 }
             }
+            balances[this] = 0;
         } else {
-            // goal reached, sending all to owner
+            // goal reached, sending all eth to main
             if (this.balance > 0) {
-                owner.transfer(this.balance);
-            }
-        }
-    }
-
-    function withdraw2() {
-        require(now - startTime > durationTime || balances[owner] <= totalSupply - maxTokens);
-        if (balances[owner] >= totalSupply - minTokens) {
-            // min token sale not reached, refunding
-            address client = msg.sender;
-            if (client != owner && balances[client] > 0) {
-                uint clientAmount = tokenToWei(balances[client]);
-                balances[owner] += balances[client];
-                balances[client] = 0;
-                client.transfer(clientAmount);
-            }
-        } else {
-            // goal reached, sending all to owner
-            if (this.balance > 0) {
-                owner.transfer(this.balance);
+                // calculting reserve tokens
+                balances[reserve] = (totalSupply - balances[this]) * 15 / 85;
+                balances[this] = 0;
+                //sending eth to main address
+                main.transfer(this.balance);
             }
         }
     }

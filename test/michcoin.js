@@ -1,41 +1,40 @@
 var common = require("./common.js");
 var MichCoin = artifacts.require("./MichCoin.sol");
 
-var twoTokenWei = 10e15;
-var oneTokenWei = 5e15;
-var halfTokenWei = 2.5e15;
-
 contract("transfer", function(accounts) {
     var mich;
-    it("should put 10 MichCoin to first account", function() {
+    it("should put 56470000 MichCoin to first account", function() {
         return MichCoin.deployed().then(function(instance) {
             mich = instance;
-            return instance.balanceOf(accounts[0]);
+            return instance.balanceOf(mich.address);
         }).then(function(tokenAmount) {
-            assert.equal(tokenAmount, common.getTokenAmount(10), "owner has not 10 tokens");
+            assert.equal(tokenAmount.toNumber(), common.getTokenAmount(56470000), "contract has not 56470000 tokens");
         });
     });
     it("should transfer 8 token to next account", function() {
         var sentTokenNum = 8;
-        return mich.transfer(accounts[1], common.getTokenAmount(sentTokenNum), {from:accounts[0]}).then(function(tx) {
+        //this one buys 11 token, cause 10% bonus
+        return mich.buyToken({from:accounts[0], value:common.oneTokenWei*10}).then(function(tx) {
+            return mich.transfer(accounts[1], common.getTokenAmount(sentTokenNum), {from:accounts[0]});
+        }).then(function(tx) {
             assert.equal(tx.logs[0].event, "Transfer");
             assert.equal(tx.logs[0].args._from, accounts[0]);
             assert.equal(tx.logs[0].args._to, accounts[1]);
             assert.equal(tx.logs[0].args._value.toNumber(), common.getTokenAmount(sentTokenNum));
             return mich.balanceOf(accounts[0], {from:accounts[0]});
         }).then(function(balance) {
-            assert.equal(balance.toNumber(), common.getTokenAmount(2), "first balance invalid");
+            assert.equal(balance.toNumber(), common.getTokenAmount(3), "first balance invalid");
             return mich.balanceOf(accounts[1], {from:accounts[1]});
         }).then(function(balance) {
             assert.equal(balance.toNumber(), common.getTokenAmount(8), "second balance invalid");
         });
     });
-    it("should fail to send 3 tokens", function() {
-        return common.assertThrow(mich.transfer(accounts[1], common.getTokenAmount(3), {from:accounts[0]}));
+    it("should fail to send 4 tokens", function() {
+        return common.assertThrow(mich.transfer(accounts[1], common.getTokenAmount(4), {from:accounts[0]}));
     });
-    it("should have 2 and 8 tokens", function() {
+    it("should have 3 and 8 tokens", function() {
         return mich.balanceOf(accounts[0]).then(function(balance) {
-            assert.equal(balance.toNumber(), common.getTokenAmount(2), "must have 2 tokens");
+            assert.equal(balance.toNumber(), common.getTokenAmount(3), "must have 3 tokens");
             return mich.balanceOf(accounts[1]);
         }).then(function(balance) {
             assert.equal(balance.toNumber(), common.getTokenAmount(8), "must have 8 tokens");
@@ -48,6 +47,12 @@ contract("transfer", function(accounts) {
 
 contract("transferFrom", function(accounts) {
     var mich;
+    it("should buy 11 tokens", function() {
+        return MichCoin.deployed().then(function(instance) {
+            mich = instance;
+            return mich.buyToken({from:accounts[0], value:common.oneTokenWei*10});
+        });
+    });
     it("should fail to transferFrom without approving", function() {
         return MichCoin.deployed().then(function(instance) {
             mich = instance;
@@ -73,7 +78,7 @@ contract("transferFrom", function(accounts) {
             assert.equal(tx.logs[0].args._value.toNumber(), common.getTokenAmount(4));
             return mich.balanceOf(accounts[0]);
         }).then(function(balance) {
-            assert.equal(balance.toNumber(), common.getTokenAmount(6));
+            assert.equal(balance.toNumber(), common.getTokenAmount(7));
             return mich.balanceOf(accounts[1]);
         }).then(function(balance) {
             assert.equal(balance.toNumber(), common.getTokenAmount(4));
@@ -99,16 +104,16 @@ contract("transferFrom", function(accounts) {
 
 contract("buyToken", function(accounts) {
     var mich;
-    it("should buy 2 tokens for 2/200 ETH", function() {
+    it("should buy 2 tokens ETH", function() {
         return MichCoin.deployed().then(function(instance) {
             mich = instance;
-            return mich.buyToken({from:accounts[1], value:twoTokenWei}).then(function(tx) {
+            return mich.buyToken({from:accounts[1], value:common.oneTokenWei*2}).then(function(tx) {
                 return mich.balanceOf(accounts[1]);
             }).then(function(balance) {
-                assert.equal(balance.toNumber(), common.getTokenAmount(2));
-                return mich.balanceOf(accounts[0]);
+                assert.equal(balance.toNumber(), 2.2e8);
+                return mich.balanceOf(mich.address);
             }).then(function(balance) {
-                assert.equal(balance.toNumber(), common.getTokenAmount(8));
+                assert.equal(balance.toNumber(), 56470000*1e8 - 2.2e8);
             });
         });
     });
@@ -116,48 +121,46 @@ contract("buyToken", function(accounts) {
         return common.assertThrow(mich.buyToken({from:accounts[1], value:0}));
     });
     it("should fail to buy > 10^-8 tokens", function() {
-        return common.assertThrow(mich.buyToken({from:accounts[1], value:oneTokenWei*1e-8-1}));
+        return common.assertThrow(mich.buyToken({from:accounts[1], value:common.oneTokenWei*1e-8-1}));
     });
     it("should buy 10^-8 tokens", function() {
-        return mich.buyToken({from:accounts[1], value:oneTokenWei*1e-8}).then(function(tx) {
+        return mich.buyToken({from:accounts[1], value:common.oneTokenWei*1e-8}).then(function(tx) {
             return mich.balanceOf(accounts[1]);
         }).then(function(balance) {
-            assert.equal(balance.toNumber(), common.getTokenAmount(2.00000001));
+            assert.equal(balance.toNumber(), 2.2e8 + 1);
         });
     });
-    it("should fail to buy 7 tokens, because maxToken=8", function() {
-        return common.assertThrow(mich.buyToken({from:accounts[1], value:7*oneTokenWei}));
+    it("should fail to buy 48e6 tokens, because 15% is reserved", function() {
+        return common.assertThrow(mich.buyToken({from:accounts[1], value:48e6*common.oneTokenWei}));
     });
-    it("should fail to buy 17 > 10 tokens, because maxToken=8", function() {
-        return common.assertThrow(mich.buyToken({from:accounts[1], value:17*oneTokenWei}));
+    it("should fail to buy 60e6", function() {
+        return common.assertThrow(mich.buyToken({from:accounts[1], value:60e6*common.oneTokenWei}));
     });
 });
 
-contract("withdraw", function(accounts) {
+contract("withdraw by selling 85% tokens", function(accounts) {
     var mich;
+    var half = 21817954.545454545454;
     it("should send funds to owner", function() {
         var ownerStartBalance;
         return MichCoin.deployed().then(function(instance) {
             mich = instance;
-            return web3.eth.getBalance(accounts[0]);
+            return web3.eth.getBalance(common.main);
         }).then(function(balance) {
             ownerStartBalance = balance.toNumber();
-            return mich.buyToken({from:accounts[1], value:twoTokenWei});
+            return mich.buyToken({from:accounts[1], value:half*common.oneTokenWei});
         }).then(function(tx) {
-            return mich.buyToken({from:accounts[2], value:twoTokenWei});
+            return mich.buyToken({from:accounts[2], value:half*common.oneTokenWei});
         }).then(function(tx) {
-            return mich.buyToken({from:accounts[3], value:oneTokenWei});
-        }).then(function(tx) {
-            return mich.buyToken({from:accounts[4], value:oneTokenWei});
-        }).then(function(tx) {
-            return mich.buyToken({from:accounts[5], value:oneTokenWei});
-        }).then(function(tx) {
-            return mich.buyToken({from:accounts[6], value:oneTokenWei});
+            return mich.buyToken({from:accounts[3], value:2e-8*common.oneTokenWei});
         }).then(function(tx) {
             return mich.withdraw({from:accounts[7]});
         }).then(function(tx) {
-            var ownerEndBalance = web3.eth.getBalance(accounts[0]).toNumber();
-            assert.equal(ownerEndBalance, ownerStartBalance + 4*twoTokenWei);
+            var ownerEndBalance = web3.eth.getBalance(common.main).toNumber();
+            assert.equal(ownerEndBalance, ownerStartBalance + (half*2 + 2e-8)*common.oneTokenWei);
+            return mich.balanceOf(common.reserve);
+        }).then(function(balance) {
+            assert.equal(balance.toNumber(), 56.47e6*0.15*1e8);
         });
     });
 });
