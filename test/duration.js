@@ -28,15 +28,15 @@ contract("withdraw refund", function(accounts) {
         }).then(function(tx) {
             return mich.buyToken({from:accounts[3], value:0.5*common.oneTokenWei});
         }).then(function(tx) {
-            balance1 = web3.eth.getBalance(accounts[1]).toNumber();
-            balance2 = web3.eth.getBalance(accounts[2]).toNumber();
-            balance3 = web3.eth.getBalance(accounts[3]).toNumber();
+            balance1 = web3.eth.getBalance(accounts[1]);
+            balance2 = web3.eth.getBalance(accounts[2]);
+            balance3 = web3.eth.getBalance(accounts[3]);
             common.sleep(2000);
             return mich.withdraw({from:accounts[7]});
         }).then(function(tx) {
-            assert.equal(web3.eth.getBalance(accounts[1]).toNumber(), balance1 + 10*common.oneTokenWei);
-            assert.equal(web3.eth.getBalance(accounts[2]).toNumber(), balance2 + common.oneTokenWei);
-            assert.equal(web3.eth.getBalance(accounts[3]).toNumber(), balance3 + 0.5*common.oneTokenWei);
+            assert.ok(web3.eth.getBalance(accounts[1]).equals(balance1.plus(10*common.oneTokenWei)));
+            assert.ok(web3.eth.getBalance(accounts[2]).equals(balance2.plus(common.oneTokenWei)));
+            assert.ok(web3.eth.getBalance(accounts[3]).equals(balance3.plus(0.5*common.oneTokenWei)));
         });
     });
 });
@@ -55,15 +55,15 @@ contract("withdraw refund with bonuses", function(accounts) {
         }).then(function(tx) {
             return mich.buyToken({from:accounts[3], value:0.5*common.oneTokenWei});
         }).then(function(tx) {
-            balance1 = web3.eth.getBalance(accounts[1]).toNumber();
-            balance2 = web3.eth.getBalance(accounts[2]).toNumber();
-            balance3 = web3.eth.getBalance(accounts[3]).toNumber();
+            balance1 = web3.eth.getBalance(accounts[1]);
+            balance2 = web3.eth.getBalance(accounts[2]);
+            balance3 = web3.eth.getBalance(accounts[3]);
             common.sleep(2000);
             return mich.withdraw({from:accounts[7]});
         }).then(function(tx) {
-            assert.equal(web3.eth.getBalance(accounts[1]).toNumber(), balance1 + 10*common.oneTokenWei);
-            assert.equal(web3.eth.getBalance(accounts[2]).toNumber(), balance2 + common.oneTokenWei);
-            assert.equal(web3.eth.getBalance(accounts[3]).toNumber(), balance3 + 0.5*common.oneTokenWei);
+            assert.ok(web3.eth.getBalance(accounts[1]).equals(balance1.plus(10*common.oneTokenWei)));
+            assert.ok(web3.eth.getBalance(accounts[2]).equals(balance2.plus(common.oneTokenWei)));
+            assert.ok(web3.eth.getBalance(accounts[3]).equals(balance3.plus(0.5*common.oneTokenWei)));
         });
     });
 });
