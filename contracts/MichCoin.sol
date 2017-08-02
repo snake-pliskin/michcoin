@@ -85,7 +85,7 @@ contract MichCoin is ERC20 {
         return allowed[_owner][_spender];
     }
 
-    function buyToken() payable {
+    function () payable {
         uint tokenAmount = weiToToken(msg.value);
         uint bonusAmount = 0;
         //add bonus token if bought on bonus period
@@ -106,8 +106,6 @@ contract MichCoin is ERC20 {
         balances[msg.sender] += tokenAmount;
         incomes[msg.sender] += msg.value;
     }
-
-    event Log(string _msg);
 
     function withdraw() {
         require(now - startTime > durationTime || balances[this] <= totalSupply - maxTokens);

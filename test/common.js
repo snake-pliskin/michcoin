@@ -26,3 +26,18 @@ module.exports.sleep = function(ms) {
     while (new Date().getTime() < ms){}
 };
 
+function assertInvalidOpcode(f) {
+    try {
+        f();
+        throw new Error("must throw exception");
+    } catch(err) {
+        if (err.message.indexOf("invalid opcode") == -1) {
+            throw new Error(err.message);
+        }
+    }
+}
+
+module.exports.assertFailTransaction = function(obj) {
+    assertInvalidOpcode(function(){web3.eth.sendTransaction(obj);});
+};
+

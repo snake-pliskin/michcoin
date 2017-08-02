@@ -1,5 +1,6 @@
 var common = require("./common.js");
 var MichCoin = artifacts.require("./MichCoin.sol");
+var BigNumber = require("bignumber.js");
 
 contract("transfer", function(accounts) {
     var mich;
@@ -14,9 +15,8 @@ contract("transfer", function(accounts) {
     it("should transfer 8 token to next account", function() {
         var sentTokenNum = 8;
         //this one buys 11 token, cause 10% bonus
-        return mich.buyToken({from:accounts[0], value:common.oneTokenWei*10}).then(function(tx) {
-            return mich.transfer(accounts[1], common.getTokenAmount(sentTokenNum), {from:accounts[0]});
-        }).then(function(tx) {
+        web3.eth.sendTransaction({from:accounts[0], value:common.oneTokenWei*10, to:mich.address, gas:200000});
+        return mich.transfer(accounts[1], common.getTokenAmount(sentTokenNum), {from:accounts[0]}).then(function(tx) {
             assert.equal(tx.logs[0].event, "Transfer");
             assert.equal(tx.logs[0].args._from, accounts[0]);
             assert.equal(tx.logs[0].args._to, accounts[1]);
@@ -50,7 +50,7 @@ contract("transferFrom", function(accounts) {
     it("should buy 11 tokens", function() {
         return MichCoin.deployed().then(function(instance) {
             mich = instance;
-            return mich.buyToken({from:accounts[0], value:common.oneTokenWei*10});
+            return web3.eth.sendTransaction({from:accounts[0], value:common.oneTokenWei*10, to:mich.address, gas:200000});
         });
     });
     it("should fail to transferFrom without approving", function() {
@@ -107,9 +107,8 @@ contract("buyToken", function(accounts) {
     it("should buy 2 tokens ETH", function() {
         return MichCoin.deployed().then(function(instance) {
             mich = instance;
-            return mich.buyToken({from:accounts[1], value:common.oneTokenWei*2}).then(function(tx) {
-                return mich.balanceOf(accounts[1]);
-            }).then(function(balance) {
+            web3.eth.sendTransaction({from:accounts[1], value:common.oneTokenWei*2, to:mich.address, gas:200000});
+            return mich.balanceOf(accounts[1]).then(function(balance) {
                 assert.equal(balance.toNumber(), 2.2e8);
                 return mich.balanceOf(mich.address);
             }).then(function(balance) {
@@ -118,29 +117,28 @@ contract("buyToken", function(accounts) {
         });
     });
     it("should fail to buy 0 tokens", function() {
-        return common.assertThrow(mich.buyToken({from:accounts[1], value:0}));
+        common.assertFailTransaction({from:accounts[1], value:0, to:mich.address, gas:200000});
     });
     it("should fail to buy > 10^-8 tokens", function() {
-        return common.assertThrow(mich.buyToken({from:accounts[1], value:common.oneTokenWei*1e-8-1}));
+        common.assertFailTransaction({from:accounts[1], value:common.oneTokenWei*1e-8-1, to:mich.address, gas:200000});
     });
     it("should buy 10^-8 tokens", function() {
-        return mich.buyToken({from:accounts[1], value:common.oneTokenWei*1e-8}).then(function(tx) {
-            return mich.balanceOf(accounts[1]);
-        }).then(function(balance) {
+        web3.eth.sendTransaction({from:accounts[1], value:common.oneTokenWei*1e-8, to:mich.address, gas:200000});
+        return mich.balanceOf(accounts[1]).then(function(balance) {
             assert.equal(balance.toNumber(), 2.2e8 + 1);
         });
     });
     it("should fail to buy 48e6 tokens, because 15% is reserved", function() {
-        return common.assertThrow(mich.buyToken({from:accounts[1], value:48e6*common.oneTokenWei}));
+        common.assertFailTransaction({from:accounts[1], value:48e6*common.oneTokenWei, to:mich.address, gas:200000});
     });
     it("should fail to buy 60e6", function() {
-        return common.assertThrow(mich.buyToken({from:accounts[1], value:60e6*common.oneTokenWei}));
+        common.assertFailTransaction({from:accounts[1], value:60e6*common.oneTokenWei, to:mich.address, gas:200000});
     });
 });
 
 contract("withdraw by selling 85% tokens", function(accounts) {
     var mich;
-    var half = 21817954.545454545454;
+    var half = new BigNumber('21817954.54545454');
     it("should send funds to owner", function() {
         var ownerStartBalance;
         return MichCoin.deployed().then(function(instance) {
@@ -148,17 +146,14 @@ contract("withdraw by selling 85% tokens", function(accounts) {
             return web3.eth.getBalance(common.main);
         }).then(function(balance) {
             ownerStartBalance = balance;
-            return mich.buyToken({from:accounts[1], value:half*common.oneTokenWei});
-        }).then(function(tx) {
-            return mich.buyToken({from:accounts[2], value:half*common.oneTokenWei});
-        }).then(function(tx) {
-            return mich.buyToken({from:accounts[3], value:2e-8*common.oneTokenWei});
-        }).then(function(tx) {
+            web3.eth.sendTransaction({from:accounts[1], value:half.times(common.oneTokenWei), to:mich.address, gas:200000});
+            web3.eth.sendTransaction({from:accounts[2], value:half.times(common.oneTokenWei), to:mich.address, gas:200000});
+            web3.eth.sendTransaction({from:accounts[3], value:2e-8*common.oneTokenWei, to:mich.address, gas:200000});
             return mich.withdraw({from:accounts[7]});
         }).then(function(tx) {
             var ownerEndBalance = web3.eth.getBalance(common.main);
-            var diff = ownerEndBalance.minus(ownerStartBalance);
-            assert.equal(diff.toNumber(), (half*2 + 2e-8)*common.oneTokenWei);
+            var diff = half.times(2).plus(2e-8).times(common.oneTokenWei);
+            assert.ok(ownerEndBalance.equals(ownerStartBalance.plus(diff)));
             return mich.balanceOf(common.reserve);
         }).then(function(balance) {
             assert.equal(balance.toNumber(), 56.47e6*0.15*1e8);
