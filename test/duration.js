@@ -7,7 +7,7 @@ contract("duration", function(accounts) {
         return MichCoin.new(56470000, 3000000, common.token2ether, 1, 0, common.main, common.reserve).then(function(instance) {
             mich = instance;
             return mich.buyToken({from:accounts[1], value:common.oneTokenWei}).then(function(tx) {
-                common.sleep(1200);
+                common.sleep(1501);
                 return common.assertThrow(mich.buyToken({from:accounts[1], value:common.oneTokenWei}));
             });
         });
@@ -31,7 +31,7 @@ contract("withdraw refund", function(accounts) {
             balance1 = web3.eth.getBalance(accounts[1]);
             balance2 = web3.eth.getBalance(accounts[2]);
             balance3 = web3.eth.getBalance(accounts[3]);
-            common.sleep(2000);
+            common.sleep(1501);
             return mich.withdraw({from:accounts[7]});
         }).then(function(tx) {
             assert.ok(web3.eth.getBalance(accounts[1]).equals(balance1.plus(10*common.oneTokenWei)));
@@ -58,7 +58,7 @@ contract("withdraw refund with bonuses", function(accounts) {
             balance1 = web3.eth.getBalance(accounts[1]);
             balance2 = web3.eth.getBalance(accounts[2]);
             balance3 = web3.eth.getBalance(accounts[3]);
-            common.sleep(2000);
+            common.sleep(1501);
             return mich.withdraw({from:accounts[7]});
         }).then(function(tx) {
             assert.ok(web3.eth.getBalance(accounts[1]).equals(balance1.plus(10*common.oneTokenWei)));

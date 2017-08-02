@@ -147,7 +147,7 @@ contract("withdraw by selling 85% tokens", function(accounts) {
             mich = instance;
             return web3.eth.getBalance(common.main);
         }).then(function(balance) {
-            ownerStartBalance = balance.toNumber();
+            ownerStartBalance = balance;
             return mich.buyToken({from:accounts[1], value:half*common.oneTokenWei});
         }).then(function(tx) {
             return mich.buyToken({from:accounts[2], value:half*common.oneTokenWei});
@@ -156,8 +156,9 @@ contract("withdraw by selling 85% tokens", function(accounts) {
         }).then(function(tx) {
             return mich.withdraw({from:accounts[7]});
         }).then(function(tx) {
-            var ownerEndBalance = web3.eth.getBalance(common.main).toNumber();
-            assert.equal(ownerEndBalance, ownerStartBalance + (half*2 + 2e-8)*common.oneTokenWei);
+            var ownerEndBalance = web3.eth.getBalance(common.main);
+            var diff = ownerEndBalance.minus(ownerStartBalance);
+            assert.equal(diff.toNumber(), (half*2 + 2e-8)*common.oneTokenWei);
             return mich.balanceOf(common.reserve);
         }).then(function(balance) {
             assert.equal(balance.toNumber(), 56.47e6*0.15*1e8);
