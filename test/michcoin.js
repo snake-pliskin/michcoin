@@ -161,3 +161,49 @@ contract("withdraw by selling 85% tokens", function(accounts) {
     });
 });
 
+contract("freeze", function(accounts) {
+    var mich;
+    it("freezes transfer", function() {
+        return MichCoin.deployed().then(function(instance) {
+            mich = instance;
+            web3.eth.sendTransaction({from:accounts[0], value:common.oneTokenWei*20, to:mich.address, gas:200000});
+            return mich.approve(accounts[1], common.getTokenAmount(1)).then(function(tx) {
+                return mich.freeze();
+            }).then(function(tx) {
+                return common.assertThrow(mich.transfer(accounts[1], common.getTokenAmount(1), {from:accounts[0]}));
+            });
+        });
+    });
+    it("freeze approve", function() {
+        return common.assertThrow(mich.approve(accounts[1], common.getTokenAmount(1)));
+    });
+    it("freeze transferFrom", function() {
+        return common.assertThrow(mich.transferFrom(accounts[0], accounts[1], common.getTokenAmount(1)));
+    });
+    it("shoild fail to sendTransaction", function() {
+        return common.assertFailTransaction({from:accounts[0], to:mich.address, value:common.oneTokenWei*1, gas:200000});
+    });
+    it("unfreeze transfer", function() {
+        return mich.unfreeze().then(function(tx) {
+            return mich.transfer(accounts[1], common.getTokenAmount(1));
+        }).then(function(tx) {
+            return mich.balanceOf(accounts[1]);
+        }).then(function(balance) {
+            assert.equal(common.getTokenAmount(1), balance.toNumber());
+        });
+    });
+    //withdraw freeze test not implemented
+});
+
+contract("owner functions", function(accounts) {
+    var mich;
+    it("fail to call freeze()", function() {
+        return MichCoin.deployed().then(function(instance) {
+            mich = instance;
+            return common.assertThrow(mich.freeze({from:accounts[1]}));
+        });
+    });
+    it("fail to call unfreeze()", function() {
+        return common.assertThrow(mich.unfreeze({from:accounts[1]}));
+    });
+});
