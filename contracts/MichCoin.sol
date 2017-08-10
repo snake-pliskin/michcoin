@@ -8,9 +8,11 @@ contract MichCoin is ERC20 {
     uint public constant decimals = 8;
 
     uint public tokenToEtherRate;
+    uint public deployTime;
     uint public startTime;
     uint public durationTime;
     uint public bonusDurationTime;
+    uint public beginDurationTime;
     uint public minTokens;
     uint public maxTokens;
     bool public frozen;
@@ -24,7 +26,10 @@ contract MichCoin is ERC20 {
     mapping(address => mapping(address => uint256)) allowed;
     address[] keys;
 
-    function MichCoin(uint _tokenCount, uint _minTokenCount, uint _tokenToEtherRate, uint _durationInSec, uint _bonusDurationInSec, address _mainAddress, address _reserveAddress) {
+    function MichCoin(uint _tokenCount, uint _minTokenCount, uint _tokenToEtherRate, uint _beginDurationInSec, uint _durationInSec, uint _bonusDurationInSec, address _mainAddress, address _reserveAddress) {
+        require(_minTokenCount <= _tokenCount);
+        require(_bonusDurationInSec <= _durationInSec);
+        require(_mainAddress != _reserveAddress);
 
         tokenToEtherRate = _tokenToEtherRate;
         totalSupply = _tokenCount*(10**decimals);
@@ -33,9 +38,11 @@ contract MichCoin is ERC20 {
 
         owner = msg.sender;
         balances[this] = totalSupply;
-        startTime = now;
+        deployTime = now;
+        startTime = deployTime + _beginDurationInSec;
         durationTime = _durationInSec;
         bonusDurationTime = _bonusDurationInSec;
+        beginDurationTime = _beginDurationInSec;
         reserve = _reserveAddress;
         main = _mainAddress;
         frozen = false;
@@ -50,6 +57,11 @@ contract MichCoin is ERC20 {
 
     modifier canFreeze {
         require(frozen == false);
+        _;
+    }
+
+    modifier waitForICO {
+        require(now - deployTime >= beginDurationTime);
         _;
     }
 
@@ -69,7 +81,7 @@ contract MichCoin is ERC20 {
         return balances[_owner];
     }
 
-    function transfer(address _to, uint _value) canFreeze returns (bool success) {
+    function transfer(address _to, uint _value) canFreeze waitForICO returns (bool success) {
         require(balances[msg.sender] >= _value);
         require(balances[_to] + _value > balances[_to]);
 
@@ -84,7 +96,7 @@ contract MichCoin is ERC20 {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint _value) canFreeze returns (bool success) {
+    function transferFrom(address _from, address _to, uint _value) canFreeze waitForICO returns (bool success) {
         require(balances[msg.sender] >= _value);
         require(allowed[_from][_to] >= _value);
         require(balances[_to] + _value > balances[_to]);
@@ -101,7 +113,7 @@ contract MichCoin is ERC20 {
         return true;
     }
 
-    function approve(address _spender, uint _value) canFreeze returns (bool success) {
+    function approve(address _spender, uint _value) canFreeze waitForICO returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -113,7 +125,7 @@ contract MichCoin is ERC20 {
 
     //ether operations
 
-    function () payable canFreeze {
+    function () payable canFreeze waitForICO {
         uint tokenAmount = weiToToken(msg.value);
         uint bonusAmount = 0;
         //add bonus token if bought on bonus period
