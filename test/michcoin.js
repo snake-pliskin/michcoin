@@ -43,6 +43,16 @@ contract("transfer", function(accounts) {
     it("should fail to send 0 tokens", function() {
         return common.assertThrow(mich.transfer(accounts[1], 0));
     });
+    it("should show 11 token sold", function() {
+        return mich.tokenSold().then(function(sold) {
+            assert.equal(sold.valueOf(), common.getTokenAmount(11));
+        });
+    });
+    it("should show available token", function() {
+        return mich.tokenAvailable().then(function(avail) {
+            assert.equal(avail.valueOf(), common.getTokenAmount(56470000*0.85 - 11));
+        });
+    });
 });
 
 contract("transferFrom", function(accounts) {

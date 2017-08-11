@@ -4,15 +4,15 @@ import './ERC20.sol';
 contract MichCoin is ERC20 {
 
     string public constant name = "Mich Coin";
-    string public constant symbol = "MI4";
+    string public constant symbol = "MCH";
     uint public constant decimals = 8;
 
     uint public tokenToEtherRate;
-    uint public deployTime;
+
     uint public startTime;
-    uint public durationTime;
-    uint public bonusDurationTime;
-    uint public beginDurationTime;
+    uint public endTime;
+    uint public bonusEndTime;
+
     uint public minTokens;
     uint public maxTokens;
     bool public frozen;
@@ -38,11 +38,11 @@ contract MichCoin is ERC20 {
 
         owner = msg.sender;
         balances[this] = totalSupply;
-        deployTime = now;
-        startTime = deployTime + _beginDurationInSec;
-        durationTime = _durationInSec;
-        bonusDurationTime = _bonusDurationInSec;
-        beginDurationTime = _beginDurationInSec;
+
+        startTime = now + _beginDurationInSec;
+        bonusEndTime = startTime + _bonusDurationInSec;
+        endTime = startTime + _durationInSec;
+
         reserve = _reserveAddress;
         main = _mainAddress;
         frozen = false;
@@ -61,7 +61,7 @@ contract MichCoin is ERC20 {
     }
 
     modifier waitForICO {
-        require(now - deployTime >= beginDurationTime);
+        require(now >= startTime);
         _;
     }
 
@@ -129,12 +129,12 @@ contract MichCoin is ERC20 {
         uint tokenAmount = weiToToken(msg.value);
         uint bonusAmount = 0;
         //add bonus token if bought on bonus period
-        if (now - startTime < bonusDurationTime) {
+        if (now < bonusEndTime) {
             bonusAmount = tokenAmount / 10;
             tokenAmount += bonusAmount;
         }
 
-        require(now - startTime < durationTime);
+        require(now < endTime);
         require(balances[this] >= tokenAmount);
         require(balances[this] - tokenAmount >= totalSupply - maxTokens);
         require(balances[msg.sender] + tokenAmount > balances[msg.sender]);
@@ -148,7 +148,7 @@ contract MichCoin is ERC20 {
     }
 
     function withdraw() canFreeze {
-        require(now - startTime > durationTime || balances[this] <= totalSupply - maxTokens);
+        require(now > endTime || balances[this] <= totalSupply - maxTokens);
         if (balances[this] >= totalSupply - minTokens) {
             // min token sale not reached, refunding
             for(uint i=0; i<keys.length; i++) {
@@ -180,6 +180,18 @@ contract MichCoin is ERC20 {
 
     function weiToToken(uint _weis) constant returns (uint) {
         return tokenToEtherRate * _weis * (10**decimals) / (10**18);
+    }
+
+    function tokenAvailable() constant returns (uint) {
+        uint available = balances[this] - (totalSupply - maxTokens);
+        if (balances[this] < (totalSupply - maxTokens)) {
+            available = 0;
+        }
+        return available;
+    }
+
+    function tokenSold() constant returns (uint) {
+        return totalSupply - balances[this];
     }
 
 }
