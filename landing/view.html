@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>MichCoin</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+        <script type="text/javascript" src="scripts.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <div class="jumbotron">
+                        <h1>MichCoin sale</h1>
+                        <p class="lead"><?= $timerMessage ?></p>
+                        <?php if ($timer > 0): ?>
+                        <div id="icotimer" class="display-4">
+                            <span class="days"></span> days, 
+                            <span class="hours"></span>:<span class="minutes"></span>:<span class="seconds"></span>
+                        </div>
+                        <?php endif ?>
+                        <hr>
+                        <p> <a class="btn btn-primary btn-lg" href="#participate" >Participate</a> </p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <p>Token Sold: <?= $tokenSold ?> (<?= $tokenSoldPercent ?>%)</p>
+                    <p>Token Available: <?= $tokenAvailable ?></p>
+                </div>
+                <div class="col">
+                    <p>Token Total: <?= $tokenTotal ?></p>
+                    <p>Token Min: <?= $tokenMin ?></p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: <?= 100*$tokenSold/($tokenSold + $tokenAvailable) ?>%;" aria-valuenow="<?= 100*$tokenSold/($tokenSold + $tokenAvailable) ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                        <?php if ($tokenMin - $tokenSold > 0): ?>
+                        <div class="progress-bar bg-success" role="progressbar" style="width: <?= 100*($tokenMin - $tokenSold)/($tokenSold + $tokenAvailable) ?>%;" aria-valuenow="<?= 100*($tokenMin - $tokenSold)/($tokenSold + $tokenAvailable) ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                        <?php endif ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <p>Rate: <?= floor($tokenRate*1.10) ?> MCH = 1 ETH until <?= date("Y-m-d H:i:s", $endTime) ?></p>
+                    <p>Rate: <?= $tokenRate ?> MCH = 1 ETH</p>
+                    <form>
+                        <div class="form-group">
+                            <label for="address" class="col-form-label">Address</label>
+                            <input type="text" class="form-control" id="address" value="<?= $address ?>" readonly onclick="this.setSelectionRange(0, this.value.length)">
+                        </div>
+                        <div class="form-group">
+                            <label for="abi" class="col-form-label">Contract ABI</label>
+                            <textarea id="abi" class="form-control" onclick="this.setSelectionRange(0, this.value.length)" readonly>[{"constant":true,"inputs":[],"name":"frozen","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"endTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"withdraw","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"tokenToEtherRate","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"tokenSold","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"tokenAvailable","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"freeze","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"unfreeze","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"startTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"minTokens","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_weis","type":"uint256"}],"name":"weiToToken","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_tokens","type":"uint256"}],"name":"tokenToWei","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"maxTokens","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"bonusEndTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"inputs":[{"name":"_tokenCount","type":"uint256"},{"name":"_minTokenCount","type":"uint256"},{"name":"_tokenToEtherRate","type":"uint256"},{"name":"_beginDurationInSec","type":"uint256"},{"name":"_durationInSec","type":"uint256"},{"name":"_bonusDurationInSec","type":"uint256"},{"name":"_mainAddress","type":"address"},{"name":"_reserveAddress","type":"address"}],"payable":false,"type":"constructor"},{"payable":true,"type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_from","type":"address"},{"indexed":true,"name":"_to","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_owner","type":"address"},{"indexed":true,"name":"_spender","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Approval","type":"event"}]</textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script>initializeClock('icotimer', new Date(<?= $timer ?>));</script>
+    </body>
+</html>
