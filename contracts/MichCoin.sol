@@ -26,7 +26,9 @@ contract MichCoin is ERC20 {
     mapping(address => mapping(address => uint256)) allowed;
     address[] keys;
 
-    function MichCoin(uint _tokenCount, uint _minTokenCount, uint _tokenToEtherRate, uint _beginDurationInSec, uint _durationInSec, uint _bonusDurationInSec, address _mainAddress, address _reserveAddress) {
+    function MichCoin(uint _tokenCount, uint _minTokenCount, uint _tokenToEtherRate,
+                      uint _beginDurationInSec, uint _durationInSec, uint _bonusDurationInSec,
+                      address _mainAddress, address _reserveAddress) {
         require(_minTokenCount <= _tokenCount);
         require(_bonusDurationInSec <= _durationInSec);
         require(_mainAddress != _reserveAddress);

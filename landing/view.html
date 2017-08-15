@@ -26,6 +26,12 @@
                     </div>
                 </div>
             </div>
+
+            <div class="row" style="margin-top: 50px;">
+                <div class="col">
+                    <h1>Status</h1>
+                </div>
+            </div>
             <div class="row">
                 <div class="col">
                     <p>Token Sold: <?= $tokenSold ?> (<?= $tokenSoldPercent ?>%)</p>
@@ -47,8 +53,9 @@
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row" style="margin-top: 50px;">
                 <div class="col">
+                    <h1>How to participate</h1>
                     <p>Rate: <?= floor($tokenRate*1.10) ?> MCH = 1 ETH until <?= date("Y-m-d H:i:s", $endTime) ?></p>
                     <p>Rate: <?= $tokenRate ?> MCH = 1 ETH</p>
                     <form>
