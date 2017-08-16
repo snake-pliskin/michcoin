@@ -18,7 +18,7 @@ function getConnection() {
 
 function readBlockchain($methodHash) {
     global $config;
-    $content = file_get_contents("https://api.infura.io/v1/jsonrpc/kovan/eth_call?params=[{%22to%22:%22".$config["address"]."%22,%22data%22:%22".$methodHash."%22}]&token=" . $config["token"]);
+    $content = file_get_contents("https://api.infura.io/v1/jsonrpc/mainnet/eth_call?params=[{%22to%22:%22".$config["address"]."%22,%22data%22:%22".$methodHash."%22}]&token=" . $config["token"]);
     $json = json_decode($content);
     $value = hexdec($json->result);
     return $value;
